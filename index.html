@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Time Travel Challenge — 1960s–1970s</title>
+  <style>
+    :root {
+      --bg: #f7f7fb;
+      --card: #ffffff;
+      --text: #1b1b1f;
+      --muted: #5b5b66;
+      --border: #d8d8e3;
+      --shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+    }
+
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      margin: 0 0 6px 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 240px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .start {
+      text-align: center;
+      padding: 40px 18px;
+    }
+
+    .start h2 {
+      margin: 0 0 10px 0;
+      font-size: 22px;
+    }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      margin: 10px 0 18px 0;
+      background: #fff;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: #111827;
+      color: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(17,24,39,0.15);
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .status {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .qline {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 6px 0 8px 0;
+    }
+
+    .question {
+      font-size: 18px;
+      margin: 12px 0 14px 0;
+      line-height: 1.35;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .opt {
+      border: 1px solid var(--border);
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 12px 12px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      user-select: none;
+    }
+
+    .opt.selected {
+      outline: 3px solid #60a5fa;
+      border-color: #60a5fa;
+      background: #eff6ff;
+      font-weight: 700;
+    }
+
+    .hint {
+      margin-top: 14px;
+      color: var(--muted);
+      font-style: italic;
+      font-size: 13px;
+    }
+
+    .npcPanel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: sticky;
+      top: 12px;
+    }
+
+    canvas {
+      border-radius: 12px;
+      background: transparent;
+    }
+
+    .npcLabel {
+      margin-top: 8px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+
+    .toast {
+      position: fixed;
+      inset: auto 18px 18px auto;
+      background: #111827;
+      color: white;
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+      max-width: 320px;
+      display: none;
+      z-index: 999;
+      white-space: pre-line;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 820px) {
+      .main { grid-template-columns: 1fr; }
+      .npcPanel { position: relative; top: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1 class="title">Time Travel Challenge — 1960s–1970s</h1>
+      <p class="subtitle">2 Levels • 20 Questions • 3 Lives • +5 points per correct</p>
+    </div>
+
+    <div class="main">
+      <div class="panel" id="leftPanel"></div>
+
+      <div class="npcPanel">
+        <canvas id="npcCanvas" width="210" height="360" aria-label="Anonymous NPC"></canvas>
+        <div class="npcLabel">ANONYMOUS NPC</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // -----------------------------
+  // DATA (same content as your Tkinter version)
+  // -----------------------------
+  const QUESTIONS = {
+    1: {year:"1964", question:"Which band helped spark 'Beatlemania' in the U.S. after appearing on The Ed Sullivan Show?",
+        options:["The Beatles","The Rolling Stones","The Kinks"], answer:"The Beatles",
+        fact:"The Beatles' 1964 Ed Sullivan appearance became a major pop culture moment."},
+    2: {year:"1969", question:"Which music festival became a symbol of 1960s youth culture and peace?",
+        options:["Woodstock","Altamont","Monterey Pop Festival"], answer:"Woodstock",
+        fact:"Woodstock (1969) is one of the most iconic music festivals ever."},
+    3: {year:"1969", question:"Which guitarist performed an iconic U.S. national anthem at Woodstock?",
+        options:["Jimi Hendrix","Eric Clapton","Carlos Santana"], answer:"Jimi Hendrix",
+        fact:"Hendrix’s Woodstock performance is legendary."},
+    4: {year:"1961", question:"Which dance became a major craze in the early 1960s?",
+        options:["The Twist","Disco","Breakdancing"], answer:"The Twist",
+        fact:"The Twist became hugely popular in the early 1960s."},
+    5: {year:"1960", question:"Which animated family lived in the Stone Age?",
+        options:["The Flintstones","The Jetsons","Scooby-Doo"], answer:"The Flintstones",
+        fact:"The Flintstones was one of TV’s first animated sitcoms."},
+    6: {year:"1966", question:"Which made-for-TV band became a real hit group?",
+        options:["The Monkees","The Beach Boys","The Doors"], answer:"The Monkees",
+        fact:"The Monkees starred in a TV show and topped music charts."},
+    7: {year:"1968", question:"Which Beatles song was written as encouragement?",
+        options:["Hey Jude","Good Vibrations","Light My Fire"], answer:"Hey Jude",
+        fact:"Hey Jude became one of the Beatles’ biggest hits."},
+    8: {year:"1964", question:"Which boxer later became Muhammad Ali?",
+        options:["Cassius Clay","Joe Frazier","George Foreman"], answer:"Cassius Clay",
+        fact:"Cassius Clay changed his name to Muhammad Ali."},
+    9: {year:"1960s", question:"Which fashion item became popular in the late 1960s?",
+        options:["Bell-bottom jeans","Top hats","Powdered wigs"], answer:"Bell-bottom jeans",
+        fact:"Bell-bottoms became a defining fashion trend."},
+    10:{year:"1970s", question:"Which music genre dominated youth culture in the 1970s?",
+        options:["Rock","Hip-hop","EDM"], answer:"Rock",
+        fact:"Rock music expanded into many subgenres."},
+
+    11:{year:"1961", question:"Which technology enabled human spaceflight?",
+        options:["Rocket propulsion","Jet skis","Steam engines"], answer:"Rocket propulsion",
+        fact:"Rocket propulsion made space travel possible."},
+    12:{year:"1969", question:"Which mission landed humans on the Moon?",
+        options:["Apollo 11","Apollo 8","Apollo 13"], answer:"Apollo 11",
+        fact:"Apollo 11 landed astronauts on the Moon in 1969."},
+    13:{year:"1969", question:"Which network became the foundation of the internet?",
+        options:["ARPANET","World Wide Web","Bluetooth"], answer:"ARPANET",
+        fact:"ARPANET connected early computers."},
+    14:{year:"1960s", question:"Which invention replaced vacuum tubes?",
+        options:["Transistors","Typewriters","Candles"], answer:"Transistors",
+        fact:"Transistors made computers smaller and faster."},
+    15:{year:"1968", question:"Who demonstrated the first computer mouse?",
+        options:["Douglas Engelbart","Thomas Edison","Henry Ford"], answer:"Douglas Engelbart",
+        fact:"Engelbart demonstrated the mouse in 1968."},
+    16:{year:"1962", question:"Which aircraft photographed missile sites in Cuba?",
+        options:["U-2 spy plane","Hot-air balloon","Submarine camera"], answer:"U-2 spy plane",
+        fact:"U-2 planes gathered critical intelligence."},
+    17:{year:"1960s", question:"Which technology enabled global communication?",
+        options:["Communication satellites","Smoke signals","Wagons"], answer:"Communication satellites",
+        fact:"Satellites enabled worldwide communication."},
+    18:{year:"1960s", question:"Which machine enabled open-heart surgery?",
+        options:["Heart-lung machine","Thermometer","Stethoscope"], answer:"Heart-lung machine",
+        fact:"It circulates blood during surgery."},
+    19:{year:"1971", question:"Which was the first widely used microprocessor?",
+        options:["Intel 4004","CD player","GPS receiver"], answer:"Intel 4004",
+        fact:"The Intel 4004 began the microprocessor era."},
+    20:{year:"1969", question:"Why was the Moon landing a technological milestone?",
+        options:["Advanced engineering and computing","Cars could fly","Video games became popular"],
+        answer:"Advanced engineering and computing",
+        fact:"It required breakthroughs in engineering and computing."}
+  };
+
+  const TOTAL_QUESTIONS = Object.keys(QUESTIONS).length;
+  const POINTS_PER_CORRECT = 5;
+
+  // -----------------------------
+  // STATE
+  // -----------------------------
+  let qnum = 1;
+  let score = 0;
+  let lives = 3;
+
+  let selectedOption = null;
+  let submitEnabled = false;
+
+  const leftPanel = document.getElementById("leftPanel");
+  const toast = document.getElementById("toast");
+  const npcCanvas = document.getElementById("npcCanvas");
+  const ctx = npcCanvas.getContext("2d");
+
+  // -----------------------------
+  // UTIL
+  // -----------------------------
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function showToast(title, body) {
+    toast.style.display = "block";
+    toast.textContent = `${title}\n\n${body}`;
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => (toast.style.display = "none"), 2600);
+  }
+
+  function levelForQuestion(n) {
+    return n <= 10 ? 1 : 2;
+  }
+
+  // -----------------------------
+  // NPC DRAW
+  // -----------------------------
+  function drawNPC() {
+    ctx.clearRect(0, 0, npcCanvas.width, npcCanvas.height);
+
+    // click area hint
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.03)";
+    ctx.fillRect(0, 0, npcCanvas.width, npcCanvas.height);
+    ctx.restore();
+
+    // Body coordinates
+    // head
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#000";
+    ctx.fillStyle = "#f2d2a9";
+    ctx.beginPath();
+    ctx.ellipse(120, 55, 35, 35, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // eyes
+    ctx.fillStyle = "#000";
+    ctx.beginPath(); ctx.arc(110, 55, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(130, 55, 3, 0, Math.PI*2); ctx.fill();
+
+    // smile
+    ctx.beginPath();
+    ctx.strokeStyle = "#000";
+    ctx.arc(120, 65, 10, 0.15*Math.PI, 0.85*Math.PI);
+    ctx.stroke();
+
+    // torso
+    ctx.fillStyle = "#444";
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.rect(103, 92, 34, 100);
+    ctx.fill();
+    ctx.stroke();
+
+    // arms
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(103, 118); ctx.lineTo(65, 150);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(137, 118); ctx.lineTo(175, 150);
+    ctx.stroke();
+
+    // legs
+    ctx.beginPath();
+    ctx.moveTo(114, 192); ctx.lineTo(114, 285);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(126, 192); ctx.lineTo(126, 285);
+    ctx.stroke();
+
+    // SIGN (left side)
+    const signX = 18, signY = 115, signW = 46, signH = 110;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#000";
+    ctx.fillStyle = submitEnabled ? "#ffd966" : "#e0e0e0";
+    ctx.beginPath();
+    ctx.rect(signX, signY, signW, signH);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#000";
+    ctx.font = "bold 12px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const lines = submitEnabled
+      ? ["CLICK","TO","SUBMIT"]
+      : ["SELECT","AN","ANSWER","FIRST"];
+
+    const centerX = signX + signW / 2;
+    const centerY = signY + signH / 2;
+    const lineGap = 16;
+    const startY = centerY - ((lines.length - 1) * lineGap) / 2;
+
+    lines.forEach((t, i) => ctx.fillText(t, centerX, startY + i * lineGap));
+
+    // Cursor feel
+    npcCanvas.style.cursor = submitEnabled ? "pointer" : "default";
+  }
+
+  // -----------------------------
+  // UI RENDER
+  // -----------------------------
+  function renderStart() {
+    selectedOption = null;
+    submitEnabled = false;
+    drawNPC();
+
+    leftPanel.innerHTML = `
+      <div class="start">
+        <h2>Ready to Time Travel?</h2>
+        <div class="pill">2 Levels • 20 Questions • 3 Lives</div>
+        <div style="margin-top:12px;">
+          <button class="btn" id="startBtn">Start Game</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("startBtn").addEventListener("click", () => {
+      qnum = 1; score = 0; lives = 3;
+      renderQuestion();
+    });
+  }
+
+  function renderQuestion() {
+    const q = QUESTIONS[qnum];
+    selectedOption = null;
+    submitEnabled = false;
+    drawNPC();
+
+    const level = levelForQuestion(qnum);
+    const shuffled = shuffle(q.options);
+
+    leftPanel.innerHTML = `
+      <div class="status">
+        <div><strong>Question:</strong> ${qnum} / ${TOTAL_QUESTIONS}</div>
+        <div><strong>Year:</strong> ${q.year}</div>
+        <div><strong>Level:</strong> ${level}</div>
+        <div><strong>Lives:</strong> ${lives}</div>
+        <div><strong>Score:</strong> ${score}</div>
+      </div>
+
+      <div class="qline">Time Travel Challenge</div>
+      <div class="question">${q.question}</div>
+
+      <div class="options" id="options"></div>
+
+      <div class="hint">
+        After selecting an answer, click the NPC (ANONYMOUS NPC) or the "CLICK TO SUBMIT" sign on the right.
+      </div>
+    `;
+
+    const optionsDiv = document.getElementById("options");
+    shuffled.forEach(opt => {
+      const btn = document.createElement("div");
+      btn.className = "opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        selectedOption = opt;
+        [...optionsDiv.children].forEach(c => c.classList.remove("selected"));
+        btn.classList.add("selected");
+        submitEnabled = true;
+        drawNPC();
+      });
+      optionsDiv.appendChild(btn);
+    });
+  }
+
+  function renderEnd(title, extra) {
+    selectedOption = null;
+    submitEnabled = false;
+    drawNPC();
+
+    leftPanel.innerHTML = `
+      <div class="start">
+        <h2>${title}</h2>
+        <div class="pill">Final Score: ${score}</div>
+        <div style="color: var(--muted); margin: 10px 0 18px 0;">${extra}</div>
+        <button class="btn" id="playAgain">Play Again</button>
+      </div>
+    `;
+    document.getElementById("playAgain").addEventListener("click", renderStart);
+  }
+
+  // -----------------------------
+  // GAME LOGIC (submit via NPC click)
+  // -----------------------------
+  function submitAnswer() {
+    if (!submitEnabled || !selectedOption) {
+      showToast("Select an answer first", "Then click the NPC sign to submit.");
+      return;
+    }
+
+    const q = QUESTIONS[qnum];
+    if (selectedOption === q.answer) {
+      score += POINTS_PER_CORRECT;
+      showToast("Correct!", `${q.fact}\n\n+${POINTS_PER_CORRECT} points`);
+    } else {
+      lives -= 1;
+      showToast("Wrong!", `Correct answer: ${q.answer}\nLives left: ${lives}`);
+    }
+
+    // move on
+    if (lives <= 0) {
+      renderEnd("GAME OVER", "You lost all 3 lives.");
+      return;
+    }
+
+    if (qnum < TOTAL_QUESTIONS) {
+      qnum += 1;
+      renderQuestion();
+    } else {
+      renderEnd("Time Travel Complete!", "Nice job finishing all 20 questions!");
+    }
+  }
+
+  // click anywhere on NPC canvas submits (same behavior as your Tkinter)
+  npcCanvas.addEventListener("click", () => {
+    if (submitEnabled) submitAnswer();
+    else showToast("Not ready yet", "Pick an answer first.");
+  });
+
+  // start
+  renderStart();
+  drawNPC();
+</script>
+</body>
+</html>
